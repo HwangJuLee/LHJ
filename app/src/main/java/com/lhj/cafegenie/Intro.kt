@@ -1,10 +1,11 @@
-package com.lhj.cafecheck
+package com.lhj.cafegenie
 
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.naver.maps.map.LocationTrackingMode
 import java.util.*
 import kotlin.concurrent.timer
 
@@ -45,4 +46,17 @@ class Intro : AppCompatActivity() {
             }
         }
     }
+
+//    override fun onRequestPermissionsResult(requestCode: Int,
+//                                            permissions: Array<String>,
+//                                            grantResults: IntArray) {
+//        if (locationSource.onRequestPermissionsResult(requestCode, permissions,
+//                grantResults)) {
+//            if (!locationSource.isActivated) { // 권한 거부됨
+//                naverMap.locationTrackingMode = LocationTrackingMode.None
+//            }
+//            return
+//        }
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//    }
 }

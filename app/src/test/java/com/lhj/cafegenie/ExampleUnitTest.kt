@@ -1,4 +1,4 @@
-package com.lhj.cafecheck
+package com.lhj.cafegenie
 
 import org.junit.Test
 
