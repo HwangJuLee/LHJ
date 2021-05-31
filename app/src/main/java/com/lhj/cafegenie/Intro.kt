@@ -26,13 +26,11 @@ class Intro : AppCompatActivity() {
 
     private var time = 0
     private var timerTask : Timer? = null
-    public var con : Context? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intro)
 
-        con = this
 
         checkPermissions()
 
@@ -54,7 +52,7 @@ class Intro : AppCompatActivity() {
             runOnUiThread {
                 Log.e("asdfgg" , "타이머 : " + sec)
                 if (sec == 2) {
-                    val nextIntent = Intent(con, MainActivity::class.java)
+                    val nextIntent = Intent(this@Intro, MainActivity::class.java)
                     startActivity(nextIntent)
                     finish()
                 }
@@ -123,17 +121,4 @@ class Intro : AppCompatActivity() {
             startTimer()
         }
     }
-
-//    override fun onRequestPermissionsResult(requestCode: Int,
-//                                            permissions: Array<String>,
-//                                            grantResults: IntArray) {
-//        if (locationSource.onRequestPermissionsResult(requestCode, permissions,
-//                grantResults)) {
-//            if (!locationSource.isActivated) { // 권한 거부됨
-//                naverMap.locationTrackingMode = LocationTrackingMode.None
-//            }
-//            return
-//        }
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//    }
 }
