@@ -10,15 +10,11 @@ import androidx.recyclerview.widget.RecyclerView
 class BottomCardAdapter(var items: ArrayList<Place> = arrayListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var item = items
 
-    private var item_click: Item_Click? = null
+    private lateinit var item_click: Item_Click
 
     interface Item_Click {
         fun onItem_click(v: View?, position: Int)
     }
-
-//    private fun Item_Click(callback: ((View,Int)->Unit)){
-//
-//    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context)
@@ -30,9 +26,9 @@ class BottomCardAdapter(var items: ArrayList<Place> = arrayListOf()) : RecyclerV
         viewholder.rv_title.setText(item.get(position).place_name)
         viewholder.root.setOnClickListener { view: View? ->
 
-//            if (item_click != null) {
-//                item_click?.onItem_click(view, position)
-//            }
+            if (item_click != null) {
+                item_click?.onItem_click(view, position)
+            }
 
         }
     }

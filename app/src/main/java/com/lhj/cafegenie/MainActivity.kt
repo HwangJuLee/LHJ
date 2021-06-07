@@ -1,12 +1,9 @@
 package com.lhj.cafegenie
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
@@ -36,7 +33,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
         private const val BASE_URL_KAKAO_API = "https://dapi.kakao.com"
-        const val KAKAO_API_KEY = "KakaoAK b2251f8a2e1755603e4c5bfd9edaa2cc"
+        const val KAKAO_API_KEY = ""
     }
 
     private lateinit var mapView: MapView
@@ -68,11 +65,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        val pageMarginPx = 15
-//        val pagerWidth = 300
-//        val screenWidth = resources.displayMetrics.widthPixels
-//        val offsetPx = screenWidth - pageMarginPx - pagerWidth
-
         //위치 권한 요청
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -102,7 +94,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //        bottom_card_layout.setPageTransformer { page, position ->
 //            page.translationX = position * -offsetPx
 //        }
-//        bottom_card_adapter.
+        bottom_card_adapter!!.setOnItemClickListener(object : BottomCardAdapter.Item_Click {
+            override fun onItem_click(v: View?, position: Int) {
+                Log.e("Asdfgg" , "루트 클릭");
+
+                val intent = Intent(this@MainActivity, InfoActivity::class.java)
+                intent.putExtra("cafe_data", location_data?.get(position));
+                startActivity(intent)
+            }
+        })
 
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
@@ -145,9 +145,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isRotateGesturesEnabled = true
 
         naverMap.setOnMapClickListener(NaverMap.OnMapClickListener { pointF, latLng ->
-//            if (marker != null) {
-//                marker.map = null
-//            }
             if (infoWindow != null) {
                 infoWindow.close()
             }
@@ -159,9 +156,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 // 이벤트 소비, OnMapClick 이벤트는 발생하지 않음
             } else {
                 // 이벤트 전파, OnMapClick 이벤트가 발생함
-//                Toast.makeText(this, "symbol : " + symbol.caption, Toast.LENGTH_SHORT).show()
-//                marker.position = LatLng(symbol.position.latitude, symbol.position.longitude)
-//                marker.map = naverMap
             }
             true
         }
@@ -173,11 +167,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.e(
                 "asdfgg",
                 "카메라 움직임 종료 : " + naverMap.cameraPosition.target.latitude + "    " + naverMap.cameraPosition.target.longitude
-
             )
 
             location_search_layout.visibility = View.VISIBLE
-
             current_latitude = naverMap.cameraPosition.target.latitude
             current_longitude = naverMap.cameraPosition.target.longitude
         }
@@ -226,7 +218,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val api = retrofit.create(SearchAPI::class.java)
         val callgetSearchLocation =
             api.getSearchLocationKakao(KAKAO_API_KEY, "cafe", latitude, longitude, 10000)
-//        val callgetSearchLocation = api.testtt("pcweb","카페","all","127.11111;37.44444",1,20,true,"ko")
 
         callgetSearchLocation.enqueue(object : Callback<ResultSearchKeyword> {
             override fun onResponse(
@@ -272,6 +263,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //                                    )?.congestion + "%"
 //                                }
 //                            }
+
+                        //infowindow 커스터 마이징
                         infoWindow.adapter = object : InfoWindow.DefaultViewAdapter(this@MainActivity){
                             override fun getContentView(p0: InfoWindow): View {
 
