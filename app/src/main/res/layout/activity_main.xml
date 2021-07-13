@@ -1,109 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="5dp"
-    tools:context=".MainActivity">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <LinearLayout
-        android:id="@+id/top_layout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#FFFFFF"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/location_search_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent"
+        android:padding="5dp"
+        tools:context=".MainActivity">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="10dp"
-            android:src="@drawable/cafe_genie_logo_2">
-
-        </androidx.appcompat.widget.AppCompatImageView>
-
-        <TextView
-            android:id="@+id/search_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:layout_weight="1"
-            android:background="@drawable/border_layout"
+        <LinearLayout
+            android:id="@+id/top_layout"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#FFFFFF"
             android:gravity="center_vertical"
-            android:hint="지역, 이름, 주소 검색"
-            android:padding="10dp"
-            android:textSize="14dp" />
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@id/location_search_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="16dp"
-            android:src="@drawable/ic_menu">
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="10dp"
+                android:src="@drawable/cafe_genie_logo_2">
 
-        </androidx.appcompat.widget.AppCompatImageView>
+            </androidx.appcompat.widget.AppCompatImageView>
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/search_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/border_layout"
+                android:gravity="center_vertical"
+                android:hint="지역, 이름, 주소 검색"
+                android:padding="10dp"
+                android:textSize="14dp" />
 
-    <LinearLayout
-        android:id="@+id/location_search_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:background="@drawable/search_border"
-        android:elevation="3dp"
-        android:orientation="horizontal"
-        android:padding="6dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/top_layout">
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="16dp"
+                android:src="@drawable/ic_menu">
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            </androidx.appcompat.widget.AppCompatImageView>
 
-        </ImageView>
+        </LinearLayout>
 
-        <TextView
+        <LinearLayout
+            android:id="@+id/location_search_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="현 지도에서 검색"
-            android:textColor="#2196F3"
-            android:textSize="12dp">
+            android:layout_marginTop="15dp"
+            android:background="@drawable/search_border"
+            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:padding="6dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/top_layout">
 
-        </TextView>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
-    </LinearLayout>
+            </ImageView>
 
-    <com.naver.maps.map.MapView
-        android:id="@+id/map_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/top_layout"></com.naver.maps.map.MapView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="현 지도에서 검색"
+                android:textColor="#2196F3"
+                android:textSize="12dp">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/bottom_card_layout"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:clipChildren="false"
-        android:layout_marginBottom="25dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+            </TextView>
+
+        </LinearLayout>
+
+        <com.naver.maps.map.MapView
+            android:id="@+id/map_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/top_layout"></com.naver.maps.map.MapView>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/bottom_card_layout"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="25dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
 
-    </androidx.viewpager2.widget.ViewPager2>
+        </androidx.viewpager2.widget.ViewPager2>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

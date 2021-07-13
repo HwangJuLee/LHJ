@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -15,9 +14,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.gms.location.*
 import com.google.gson.GsonBuilder
+import com.lhj.cafegenie.databinding.ActivityMainBinding
+import com.lhj.cafegenie.retrofit.SearchService
+import com.lhj.cafegenie.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.*
@@ -30,10 +33,14 @@ import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    var vm: MainViewModel = MainViewModel()
+
+    lateinit var binding: ActivityMainBinding
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
         private const val BASE_URL_KAKAO_API = "https://dapi.kakao.com"
-        const val KAKAO_API_KEY = ""
+        const val KAKAO_API_KEY = "KakaoAK b2251f8a2e1755603e4c5bfd9edaa2cc"
     }
 
     private lateinit var mapView: MapView
@@ -42,7 +49,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var location_search_layout: LinearLayout
     lateinit var bottom_card_layout: ViewPager2
 
-    var bottom_card_adapter : BottomCardAdapter? = null
+    var bottom_card_adapter: BottomCardAdapter? = null
 
     //    var marker = Marker()
     var infoWindow = InfoWindow()
@@ -50,8 +57,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var locationSource: FusedLocationSource
     lateinit var fusedLocationClient: FusedLocationProviderClient
     lateinit var locationRequest: LocationRequest   //현재 위치 요청
-    var priority: Int = 0
-    var interval: Int = 0
+
     lateinit var locationCallback: LocationCallback //현재 위치 callback
 
     var current_latitude: Double = 0.0     //현재 위도
@@ -59,11 +65,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     val random = Random()       //혼잡도 설정 (랜덤)
 
-    val location_data  = ArrayList<Place>()
+    val location_data = ArrayList<Place>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+//        setContentView(R.layout.activity_main)
+
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         //위치 권한 요청
         if (ActivityCompat.checkSelfPermission(
@@ -96,7 +104,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //        }
         bottom_card_adapter!!.setOnItemClickListener(object : BottomCardAdapter.Item_Click {
             override fun onItem_click(v: View?, position: Int) {
-                Log.e("Asdfgg" , "루트 클릭");
+                Log.e("Asdfgg", "루트 클릭");
 
                 val intent = Intent(this@MainActivity, InfoActivity::class.java)
                 intent.putExtra("cafe_data", location_data?.get(position));
@@ -127,9 +135,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient("6cwm0r1vwh");
         mapView.getMapAsync(this)
 
+        addObservableData()
     }
 
     override fun onMapReady(p0: NaverMap) {
+
         initLocation()
 
         naverMap = p0
@@ -160,9 +170,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             true
         }
 
-        naverMap.addOnCameraChangeListener { reason, animated ->
+//        naverMap.addOnCameraChangeListener { reason, animated ->
+//
+//        }
 
-        }
         naverMap.addOnCameraIdleListener {
             Log.e(
                 "asdfgg",
@@ -208,27 +219,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onLowMemory()
     }
 
-    fun searchTask(query: String, latitude: Double, longitude: Double) {
-
-        var gson = GsonBuilder().setLenient().create()
-
-        val retrofit = Retrofit.Builder().baseUrl(BASE_URL_KAKAO_API)
-            .addConverterFactory(GsonConverterFactory.create(gson)).build()
-
-        val api = retrofit.create(SearchAPI::class.java)
-        val callgetSearchLocation =
-            api.getSearchLocationKakao(KAKAO_API_KEY, "cafe", latitude, longitude, 10000)
-
-        callgetSearchLocation.enqueue(object : Callback<ResultSearchKeyword> {
-            override fun onResponse(
-                call: Call<ResultSearchKeyword>,
-                response: Response<ResultSearchKeyword>
-            ) {
-                Log.d("결과", "성공 : ${response.raw()}")
-                Log.d("결과", "성공 : ${response.body()}")
-                Log.d("결과", "성공 : ${response.body()?.documents?.size}")
-                var result = response.body()?.documents
-                for (i in response.body()?.documents?.indices!!) {
+    private fun addObservableData() {
+        vm.locattionResultData.observe(this, androidx.lifecycle.Observer {
+            if (it != null) {
+                var result = it.documents
+                for (i in it.documents?.indices!!) {
                     //혼잡도 세팅 (랜덤)
                     result?.get(i)?.congestion = random.nextInt(100);
 
@@ -265,19 +260,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //                            }
 
                         //infowindow 커스터 마이징
-                        infoWindow.adapter = object : InfoWindow.DefaultViewAdapter(this@MainActivity){
-                            override fun getContentView(p0: InfoWindow): View {
+                        infoWindow.adapter =
+                            object : InfoWindow.DefaultViewAdapter(this@MainActivity) {
+                                override fun getContentView(p0: InfoWindow): View {
 
-                                var view = View.inflate(this@MainActivity, R.layout.location_item, null)
-                                var congestion_iv : ImageView = view.findViewById(R.id.congestion_iv)
-                                var cafe_tv : TextView = view.findViewById(R.id.cafe_tv)
+                                    var view = View.inflate(
+                                        this@MainActivity,
+                                        R.layout.location_item,
+                                        null
+                                    )
+                                    var congestion_iv: ImageView =
+                                        view.findViewById(R.id.congestion_iv)
+                                    var cafe_tv: TextView = view.findViewById(R.id.cafe_tv)
 
 //                                congestion_iv.setImageDrawable()
-                                cafe_tv.setText(result?.get(i).place_name)
+                                    cafe_tv.setText(result?.get(i).place_name)
 
-                                return view
+                                    return view
+                                }
                             }
-                        }
 
                         infoWindow.onClickListener = Overlay.OnClickListener { overlay ->
 
@@ -305,13 +306,122 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     location_data.add(result?.get(i))
                     bottom_card_layout.adapter?.notifyDataSetChanged()
                 }
-            }
 
-            override fun onFailure(call: Call<ResultSearchKeyword>, t: Throwable) {
-                Log.d("결과:", "실패 : $t")
             }
         })
     }
+
+//    fun searchTask(query: String, latitude: Double, longitude: Double) {
+//
+//        var gson = GsonBuilder().setLenient().create()
+//
+//        val retrofit = Retrofit.Builder().baseUrl(BASE_URL_KAKAO_API)
+//            .addConverterFactory(GsonConverterFactory.create(gson)).build()
+//
+//        val api = retrofit.create(SearchService::class.java)
+//        val callgetSearchLocation =
+//            api.getSearchLocationKakao(KAKAO_API_KEY, "cafe", latitude, longitude, 10000)
+//
+//        callgetSearchLocation.enqueue(object : Callback<ResultSearchKeyword> {
+//            override fun onResponse(
+//                call: Call<ResultSearchKeyword>,
+//                response: Response<ResultSearchKeyword>
+//            ) {
+//                Log.d("결과", "성공 : ${response.raw()}")
+//                Log.d("결과", "성공 : ${response.body()}")
+//                Log.d("결과", "성공 : ${response.body()?.documents?.size}")
+//                var result = response.body()?.documents
+//                for (i in response.body()?.documents?.indices!!) {
+//                    //혼잡도 세팅 (랜덤)
+//                    result?.get(i)?.congestion = random.nextInt(100);
+//
+//                    var marker = Marker()
+//                    marker.position = LatLng(
+//                        result?.get(i)?.y?.toDouble()!!,
+//                        result?.get(i)?.x?.toDouble()!!
+//                    )
+//                    marker.width = 70
+//                    marker.height = 90
+////                    marker.captionText = result?.get(i)?.place_name
+////                    marker.icon = OverlayImage.fromResource(R.drawable.cafe_img2)
+//                    marker.icon = MarkerIcons.BLACK
+//                    Log.e("asdfgg", "result?.get(i)?.congestion : " + result?.get(i)?.congestion);
+//                    if (result?.get(i)?.congestion <= 33) {
+//                        marker.iconTintColor = Color.GREEN
+//                    } else if (result?.get(i)?.congestion > 33 && result?.get(i)?.congestion <= 66) {
+//                        marker.iconTintColor = Color.YELLOW
+//                    } else {
+//                        marker.iconTintColor = Color.RED
+//                    }
+//                    marker.setCaptionAligns(Align.Top)
+//
+//                    marker.onClickListener = Overlay.OnClickListener { overlay ->
+//                        val marker = overlay as Marker
+//
+////                        infoWindow.adapter =
+////                            object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
+////                                override fun getText(infoWindow: InfoWindow): CharSequence {
+////                                    return result?.get(i)?.place_name + "\n" + "혼잡도 : " + result?.get(
+////                                        i
+////                                    )?.congestion + "%"
+////                                }
+////                            }
+//
+//                        //infowindow 커스터 마이징
+//                        infoWindow.adapter =
+//                            object : InfoWindow.DefaultViewAdapter(this@MainActivity) {
+//                                override fun getContentView(p0: InfoWindow): View {
+//
+//                                    var view = View.inflate(
+//                                        this@MainActivity,
+//                                        R.layout.location_item,
+//                                        null
+//                                    )
+//                                    var congestion_iv: ImageView =
+//                                        view.findViewById(R.id.congestion_iv)
+//                                    var cafe_tv: TextView = view.findViewById(R.id.cafe_tv)
+//
+////                                congestion_iv.setImageDrawable()
+//                                    cafe_tv.setText(result?.get(i).place_name)
+//
+//                                    return view
+//                                }
+//                            }
+//
+//                        infoWindow.onClickListener = Overlay.OnClickListener { overlay ->
+//
+//                            Log.e("asdfgg", "정보창 클릭 : " + result?.get(i).place_name);
+//
+//                            val intent = Intent(this@MainActivity, InfoActivity::class.java)
+//                            intent.putExtra("cafe_data", result?.get(i));
+//                            startActivity(intent)
+//
+//                            true
+//                        }
+//
+//                        if (marker.infoWindow == null) {
+//                            // 현재 마커에 정보 창이 열려있지 않을 경우 엶
+//                            infoWindow.open(marker)
+//                        } else {
+//                            // 이미 현재 마커에 정보 창이 열려있을 경우 닫음
+//                            infoWindow.close()
+//                        }
+//
+//                        true
+//                    }
+//
+//                    marker.map = naverMap
+//                    location_data.add(result?.get(i))
+//                    bottom_card_layout.adapter?.notifyDataSetChanged()
+//                }
+//            }
+//
+//
+//            override fun onFailure(call: Call<ResultSearchKeyword>, t: Throwable) {
+//                Log.d("결과:", "실패 : $t")
+//            }
+//        })
+//    }
 
     private fun initLocation() {
         if (ActivityCompat.checkSelfPermission(
@@ -340,7 +450,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         naverMap.moveCamera(cameraUpdate)
                         fusedLocationClient.removeLocationUpdates(locationCallback)
 
-                        searchTask("카페", location.longitude, location.latitude);
+//                        searchTask("카페", location.longitude, location.latitude);
+                        Log.e("Asdgfg", "하나하나")
+                        vm.viewCommunicate(
+                            KAKAO_API_KEY,
+                            "cafe",
+                            location.latitude,
+                            location.longitude,
+                            10000
+                        )
 
                     }
                 }
