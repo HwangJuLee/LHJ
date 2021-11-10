@@ -1,29 +1,22 @@
 package com.lhj.cafegenie
 
-import android.app.Activity
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.webkit.*
-import android.widget.Toast
-import androidx.annotation.RequiresApi
-import com.naver.maps.map.MapView
 
-class InfoActivity : AppCompatActivity() {
+class InfoActivity : BaseActivity() {
 
-    lateinit var cafe_data : Place
+    lateinit var cafeData : CafeData.Place
     lateinit var webview: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_info)
 
-        cafe_data = intent.getSerializableExtra("cafe_data") as Place
+        cafeData = intent.getSerializableExtra("cafeData") as CafeData.Place
 
         webview = findViewById(R.id.webview)
-        Log.e("asdfgg" , "카페명 : " + cafe_data.place_name)
 
         webview.settings.javaScriptEnabled = true // 자바 스크립트 허용
 
@@ -32,9 +25,16 @@ class InfoActivity : AppCompatActivity() {
         webview.webChromeClient = WebChromeClient()
 
         // 원하는 주소를 WebView에 연결
-        webview.loadUrl(cafe_data.place_url.replace("http", "https"))
+        webview.loadUrl(cafeData.place_url.replace("http", "https"))
     }
 
+    override fun observeViewModel() {
+
+    }
+
+    override fun initViewBinding() {
+
+    }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && webview.canGoBack()) {

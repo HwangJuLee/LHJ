@@ -3,17 +3,18 @@ package com.lhj.cafegenie
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
-class BottomCardAdapter(var items: ArrayList<Place> = arrayListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class BottomCardAdapter(var items: ArrayList<CafeData.Place> = arrayListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var item = items
+    private lateinit var itemClick: ItemClick
+    private lateinit var favoriteClick: ItemClick
 
-    private lateinit var item_click: Item_Click
-
-    interface Item_Click {
-        fun onItem_click(v: View?, position: Int)
+    interface ItemClick {
+        fun onItemClick(v: View?, position: Int)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -23,25 +24,40 @@ class BottomCardAdapter(var items: ArrayList<Place> = arrayListOf()) : RecyclerV
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         var viewholder : ViewHolder = holder as ViewHolder
-        viewholder.rv_title.setText(item.get(position).place_name)
+        viewholder.cafeName.text = item.get(position).place_name
         viewholder.root.setOnClickListener { view: View? ->
 
-            if (item_click != null) {
-                item_click?.onItem_click(view, position)
+            if (itemClick != null) {
+                itemClick?.onItemClick(view, position)
             }
 
+        }
+        viewholder.favorite_iv.setOnClickListener { view: View? ->
+            if (favoriteClick != null) {
+                favoriteClick?.onItemClick(view, position)
+            }
         }
     }
 
     override fun getItemCount(): Int = item.size
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
-        val root = itemView.findViewById<ConstraintLayout>(R.id.root);
-        val rv_title = itemView.findViewById<TextView>(R.id.cafe_name_tv)
+    fun setData(cafeData: ArrayList<CafeData.Place>){
+        item = cafeData
+        notifyDataSetChanged()
     }
 
-    fun setOnItemClickListener(listener: Item_Click) {
-        this.item_click = listener
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
+        val root : ConstraintLayout = itemView.findViewById(R.id.root);
+        val cafeName: TextView = itemView.findViewById(R.id.cafe_name_tv)
+        val favorite_iv: ImageView = itemView.findViewById(R.id.favorite_iv)
+    }
+
+    fun setOnItemClickListener(listener: ItemClick) {
+        this.itemClick = listener
+    }
+
+    fun setOnFavoriteClickListener(listener: ItemClick) {
+        this.favoriteClick = listener
     }
 
 }

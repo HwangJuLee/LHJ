@@ -1,7 +1,6 @@
 package com.lhj.cafegenie.retrofit
 
-import com.lhj.cafegenie.ResultData
-import com.lhj.cafegenie.ResultSearchKeyword
+import com.lhj.cafegenie.CafeData
 import io.reactivex.Observable
 import retrofit2.Call
 import retrofit2.http.GET
@@ -18,7 +17,7 @@ interface SearchService {
         @Query("display") display: Int? = null,
         @Query("start") start: Int? = null,
         @Query("sort") sort: String? = null
-    ): Call<ResultData>
+    ): Call<CafeData.NaverCafeData>
 
 //    //카카오 위치 검색 API
 //    @GET("v2/local/search/keyword.json")
@@ -38,5 +37,5 @@ interface SearchService {
         @Query("x") x: Double,             // latitude
         @Query("y") y: Double,            // longitude
         @Query("radius") radius: Int             // radius
-    ): Observable<ResultSearchKeyword>
+    ): Observable<CafeData.ResultSearchKeyword>
 }

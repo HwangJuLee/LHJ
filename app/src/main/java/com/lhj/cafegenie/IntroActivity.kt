@@ -1,28 +1,15 @@
 package com.lhj.cafegenie
 
-import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.naver.maps.map.LocationTrackingMode
 import java.util.*
 import kotlin.concurrent.timer
 
-class Intro : AppCompatActivity() {
-
-    companion object {
-        private const val PERMISSIONS_REQUEST_CODE = 1000
-        private val REQUIRED_PERMISSIONS = arrayOf(
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-    }
+class IntroActivity : BaseActivity() {
 
     private var time = 0
     private var timerTask : Timer? = null
@@ -31,9 +18,13 @@ class Intro : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intro)
 
-
         checkPermissions()
+    }
 
+    override fun observeViewModel() {
+    }
+
+    override fun initViewBinding() {
     }
 
     override fun onDestroy() {
@@ -50,9 +41,8 @@ class Intro : AppCompatActivity() {
             val sec = time
 
             runOnUiThread {
-                Log.e("asdfgg" , "타이머 : " + sec)
                 if (sec == 2) {
-                    val nextIntent = Intent(this@Intro, MainActivity::class.java)
+                    val nextIntent = Intent(this@IntroActivity, MainActivity::class.java)
                     startActivity(nextIntent)
                     finish()
                 }

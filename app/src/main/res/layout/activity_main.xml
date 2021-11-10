@@ -94,6 +94,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/top_layout"></com.naver.maps.map.MapView>
 
+<!--        <com.naver.maps.map.widget.ZoomControlView-->
+<!--            android:id="@+id/zoom"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="12dp"-->
+<!--            android:layout_gravity="end|bottom"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"/>-->
+
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/bottom_card_layout"
             android:layout_width="match_parent"

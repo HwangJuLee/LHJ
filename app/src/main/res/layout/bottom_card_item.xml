@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
     android:background="#FFFFFF"
-    android:elevation="4dp">
+    android:elevation="4dp"
+    android:padding="10dp">
 
     <FrameLayout
         android:id="@+id/cafe_img_layout"
@@ -17,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/bookmark_iv"
+            android:id="@+id/favorite_iv"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginLeft="6dp"
@@ -57,15 +60,6 @@
                 android:textColor="#333333"
                 android:textSize="15dp"
                 android:textStyle="bold">
-
-            </TextView>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="영업중"
-                android:textColor="#aaaaaa"
-                android:textSize="12dp">
 
             </TextView>
 

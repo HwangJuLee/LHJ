@@ -27,7 +27,7 @@
             android:name="com.naver.maps.map.CLIENT_ID"
             android:value="6cwm0r1vwh" />
 
-        <activity android:name=".Intro">
+        <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,6 +1,6 @@
 package com.lhj.cafegenie.remote
 
-import com.lhj.cafegenie.ResultSearchKeyword
+import com.lhj.cafegenie.CafeData
 import io.reactivex.Observable
 
 interface RemoteDataSource {
@@ -10,5 +10,5 @@ interface RemoteDataSource {
         x: Double,
         y: Double,
         radius: Int
-    ) : Observable<ResultSearchKeyword>
+    ) : Observable<CafeData.ResultSearchKeyword>
 }

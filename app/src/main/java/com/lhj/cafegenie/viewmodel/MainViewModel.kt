@@ -1,21 +1,22 @@
 package com.lhj.cafegenie.viewmodel
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.lhj.cafegenie.ResultSearchKeyword
+import com.lhj.cafegenie.CafeData
+import com.lhj.cafegenie.DB.FavoriteData
 import com.lhj.cafegenie.repository.MainRepository
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
-class MainViewModel : ViewModel() {
-    val mainRepository = MainRepository()
-
-    internal val disposables = CompositeDisposable()
-
-    val locattionResultData = MutableLiveData<ResultSearchKeyword>()
-    val wifiDisconnect = MutableLiveData<Unit>()
+class MainViewModel(application : Application) : ViewModel() {
+    private val mainRepository = MainRepository(application)
+    private val favorites = mainRepository.getAllFav()
+    private val disposables = CompositeDisposable()
+    val locationResultData = MutableLiveData<CafeData.ResultSearchKeyword>()
 
     fun viewCommunicate(
         key: String,
@@ -33,34 +34,31 @@ class MainViewModel : ViewModel() {
                 .doOnTerminate {}
                 // 옵서버블을 구독
                 .subscribe({
-                    // API를 통해 액세스 토큰을 정상적으로 받았을 때 처리할 작업을 구현
-                    // 작업 중 오류가 발생하면 이 블록은 호출되지 x
-
                     // onResponse
-                    Log.e("asdfgg", "오우야")
                     if (it.documents != null) {
-                        Log.e("asdfgg", "오우야 : " + it.documents.get(0).address_name)
-                        locattionResultData.value = it
+                        locationResultData.value = it
                     }
-
-
-                    /*}else{ //아이디 중복
-                        isSuccessNetwork.value = false
-
-                        Log.d("test",  "아이디중복: " + it.message())
-                    }*/
-
                 }) {
                     // 에러 블록
                     // 네트워크 오류나 데이터 처리 오류 등
                     // 작업이 정상적으로 완료되지 않았을 때 호출
 
-
                     // onFailure
-                    Log.e("test",  "통신 실패 error : " + it.toString())
-                    wifiDisconnect.value = Unit
+                    Log.e("test", "통신 실패 error : $it")
                 }
         )
+    }
+
+    fun getAll(): LiveData<List<FavoriteData>> {
+        return this.favorites
+    }
+
+    fun insert(favData : FavoriteData) {
+        mainRepository.insertFav(favData)
+    }
+
+    fun delete(favData : FavoriteData) {
+        mainRepository.deleteFav(favData)
     }
 
     override fun onCleared() {

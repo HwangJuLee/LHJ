@@ -1,25 +1,19 @@
 package com.lhj.cafegenie
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.gms.location.*
-import com.google.gson.GsonBuilder
+import com.lhj.cafegenie.DB.FavoriteData
 import com.lhj.cafegenie.databinding.ActivityMainBinding
-import com.lhj.cafegenie.retrofit.SearchService
 import com.lhj.cafegenie.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -28,24 +22,18 @@ import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import kotlinx.android.synthetic.main.activity_main.*
 import retrofit2.*
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 import kotlin.collections.ArrayList
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : BaseActivity(), OnMapReadyCallback, View.OnClickListener {
 
-    var vm: MainViewModel = MainViewModel()
+    lateinit var vm: MainViewModel
 
     lateinit var binding: ActivityMainBinding
 
-    companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
-        const val KAKAO_API_KEY = "KakaoAK b2251f8a2e1755603e4c5bfd9edaa2cc"
-    }
+    private lateinit var naverMap: NaverMap
 
-    lateinit var naverMap: NaverMap
-
-    var bottom_card_adapter: BottomCardAdapter? = null
+    private var bottomCardAdapter: BottomCardAdapter? = null
 
     var infoWindow = InfoWindow()
 
@@ -55,51 +43,31 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     lateinit var locationCallback: LocationCallback //현재 위치 callback
 
-    var current_latitude: Double = 0.0     //현재 위도
-    var current_longitude: Double = 0.0    //현재 경도
+    private var currentLatitude: Double = 0.0     //현재 위도
+    private var currentLongitude: Double = 0.0    //현재 경도
 
-    val random = Random()       //혼잡도 설정 (랜덤)
+    private val random = Random()       //혼잡도 설정 (랜덤)
 
-    val location_data = ArrayList<Place>()
+    private val locationData = ArrayList<CafeData.Place>()
+    private lateinit var favoriteData : List<FavoriteData>
+    private val markerData = ArrayList<Marker>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        vm =  MainViewModel(this.application)
+
         super.onCreate(savedInstanceState)
-
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-
-        //위치 권한 요청
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Toast.makeText(this, "위치 권한 요청에 동의해 주세요.", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         //상단 레이아웃 위로 올리기
         top_layout.bringToFront()
         location_search_layout.bringToFront()
 
         //하단 카페 설명
-        bottom_card_adapter = BottomCardAdapter(location_data);
-        bottom_card_layout.adapter = bottom_card_adapter
         bottom_card_layout.orientation = ViewPager2.ORIENTATION_HORIZONTAL // 방향을 가로로
-//        bottom_card_layout.setPageTransformer { page, position ->
-//            page.translationX = position * -offsetPx
-//        }
-        bottom_card_adapter!!.setOnItemClickListener(object : BottomCardAdapter.Item_Click {
-            override fun onItem_click(v: View?, position: Int) {
-                Log.e("Asdfgg", "루트 클릭");
+        bottom_card_layout.clipToPadding = false
+        bottom_card_layout.clipChildren = false
 
-                val intent = Intent(this@MainActivity, InfoActivity::class.java)
-                intent.putExtra("cafe_data", location_data?.get(position));
-                startActivity(intent)
-            }
-        })
+        bottomCardAdapter = BottomCardAdapter(locationData)
+        bottom_card_layout.adapter = bottomCardAdapter
 
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
@@ -124,14 +92,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient("6cwm0r1vwh");
         map_fragment.getMapAsync(this)
 
-        addObservableData()
+//        val fm = supportFragmentManager
+//        val mapFragment = fm.findFragmentById(R.id.map_fragment) as MapFragment?
+//            ?: MapFragment.newInstance(NaverMapOptions().zoomControlEnabled(false))
+//                .also {
+//                    fm.beginTransaction().add(R.id.map_fragment, it).commit()
+//                }
+//        mapFragment.getMapAsync {
+//            val zoomControlView = findViewById(R.id.zoom) as ZoomControlView
+//            zoomControlView.map = naverMap
+//        }
+
+        location_search_layout.setOnClickListener(this)
     }
 
     override fun onMapReady(p0: NaverMap) {
 
-        initLocation()
-
         naverMap = p0
+
+        initLocation()
 
         naverMap.mapType = NaverMap.MapType.Basic
         naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BUILDING, true)
@@ -139,15 +118,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         naverMap.locationSource = locationSource
         naverMap.locationTrackingMode = LocationTrackingMode.None
 
+
         val uiSettings = naverMap.uiSettings
+        uiSettings.isCompassEnabled = true
+        uiSettings.isScaleBarEnabled = true
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isRotateGesturesEnabled = true
 
-        naverMap.setOnMapClickListener(NaverMap.OnMapClickListener { pointF, latLng ->
+        naverMap.onMapClickListener = NaverMap.OnMapClickListener { pointF, latLng ->
             if (infoWindow != null) {
                 infoWindow.close()
             }
-        })
+        }
 
         naverMap.setOnSymbolClickListener { symbol ->
             if (symbol.caption == "서울특별시청") {
@@ -159,22 +141,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             true
         }
 
-//        naverMap.addOnCameraChangeListener { reason, animated ->
-//
-//        }
-
+        //카메라 움직임 감지 리스너
         naverMap.addOnCameraIdleListener {
-            Log.e(
-                "asdfgg",
-                "카메라 움직임 종료 : " + naverMap.cameraPosition.target.latitude + "    " + naverMap.cameraPosition.target.longitude
-            )
-
             location_search_layout.visibility = View.VISIBLE
-            current_latitude = naverMap.cameraPosition.target.latitude
-            current_longitude = naverMap.cameraPosition.target.longitude
+            currentLatitude = naverMap.cameraPosition.target.latitude
+            currentLongitude = naverMap.cameraPosition.target.longitude
         }
 //        CameraUpdate.scrollAndZoomTo(LatLng(100.5666102, 126.9783881), 15.0);
 
+    }
+
+    override fun observeViewModel() {
+        addObservableCafeData()
+        getFavorites()
+    }
+
+    override fun initViewBinding() {
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
     }
 
     override fun onStart() {
@@ -208,43 +191,60 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         map_fragment.onLowMemory()
     }
 
-    private fun addObservableData() {
-        vm.locattionResultData.observe(this, androidx.lifecycle.Observer {
+    override fun onClick(p0: View?) {
+        when (p0?.id) {
+            R.id.location_search_layout ->
+
+                vm.viewCommunicate(
+                    KAKAO_API_KEY,
+                    "cafe",
+                    currentLongitude,
+                    currentLatitude,
+                    10000
+                )
+        }
+    }
+
+    private fun addObservableCafeData() {
+        vm.locationResultData.observe(this, androidx.lifecycle.Observer {
             if (it != null) {
-                var result = it.documents
+
+                if (locationData.size > 0) {
+                    locationData.clear()
+                }
+
+                if (markerData.size > 0) {
+                    for (i in markerData.indices) {
+                        markerData.get(i).map = null
+                    }
+                    markerData.clear()
+                }
+
                 for (i in it.documents.indices) {
                     //혼잡도 세팅 (랜덤)
-                    result.get(i).congestion = random.nextInt(100);
+                    it.documents.get(i).congestion = random.nextInt(100);
+
                     var marker = Marker()
                     marker.position = LatLng(
-                        result.get(i).y.toDouble(),
-                        result.get(i).x.toDouble()
+                        it.documents.get(i).y.toDouble(),
+                        it.documents.get(i).x.toDouble()
                     )
-                    marker.width = 70
-                    marker.height = 90
+                    marker.width = 100
+                    marker.height = 100
 //                    marker.captionText = result?.get(i)?.place_name
 //                    marker.icon = OverlayImage.fromResource(R.drawable.cafe_img2)
                     marker.icon = MarkerIcons.BLACK
-                    if (result.get(i).congestion <= 33) {
-                        marker.iconTintColor = Color.GREEN
-                    } else if (result.get(i).congestion > 33 && result.get(i).congestion <= 66) {
-                        marker.iconTintColor = Color.YELLOW
+                    if (it.documents.get(i).congestion <= 33) {
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_coffee_green)
+                    } else if (it.documents.get(i).congestion > 33 && it.documents.get(i).congestion <= 66) {
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_coffee_yellow)
                     } else {
-                        marker.iconTintColor = Color.RED
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_coffee_red)
                     }
                     marker.setCaptionAligns(Align.Top)
 
                     marker.onClickListener = Overlay.OnClickListener { overlay ->
                         val marker = overlay as Marker
-
-//                        infoWindow.adapter =
-//                            object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
-//                                override fun getText(infoWindow: InfoWindow): CharSequence {
-//                                    return result?.get(i)?.place_name + "\n" + "혼잡도 : " + result?.get(
-//                                        i
-//                                    )?.congestion + "%"
-//                                }
-//                            }
 
                         //infowindow 커스터 마이징
                         infoWindow.adapter =
@@ -256,23 +256,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                         R.layout.location_item,
                                         null
                                     )
+
                                     var congestion_iv: ImageView =
                                         view.findViewById(R.id.congestion_iv)
-                                    var cafe_tv: TextView = view.findViewById(R.id.cafe_tv)
+                                    var congestion_tv: TextView =
+                                        view.findViewById(R.id.congestion_tv)
+                                    var cafeTv: TextView = view.findViewById(R.id.cafe_tv)
+
+                                    if (it.documents.get(i).congestion <= 33) {
+                                        congestion_iv.setImageResource(R.drawable.ic_coffee_green)
+                                    } else if (it.documents.get(i).congestion > 33 && it.documents.get(i).congestion <= 66) {
+                                        congestion_iv.setImageResource(R.drawable.ic_coffee_yellow)
+                                    } else {
+                                        congestion_iv.setImageResource(R.drawable.ic_coffee_red)
+                                    }
 
 //                                congestion_iv.setImageDrawable()
-                                    cafe_tv.setText(result.get(i).place_name)
+                                    congestion_tv.text = locationData.get(i).congestion.toString() + "${'%'}"
+                                    cafeTv.text = locationData.get(i).place_name
 
                                     return view
                                 }
                             }
 
                         infoWindow.onClickListener = Overlay.OnClickListener { overlay ->
-
-                            Log.e("asdfgg", "정보창 클릭 : " + result.get(i).place_name);
-
                             val intent = Intent(this@MainActivity, InfoActivity::class.java)
-                            intent.putExtra("cafe_data", result.get(i));
+                            intent.putExtra("cafeData", locationData.get(i));
                             startActivity(intent)
 
                             true
@@ -288,11 +297,52 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                         true
                     }
-
-                    marker.map = naverMap
-                    location_data.add(result.get(i))
-                    bottom_card_layout.adapter?.notifyDataSetChanged()
+                    Log.e("asdfgg" , " it.documents.toString() : " + it.documents.toString())
+                    locationData.add(it.documents.get(i))
+                    markerData.add(marker)
                 }
+
+                for (i in markerData.indices) {
+                    markerData.get(i).map = naverMap
+                }
+
+//                bottomCardAdapter = BottomCardAdapter(locationData)
+//                bottom_card_layout.adapter = bottomCardAdapter
+                bottomCardAdapter?.setData(locationData)
+                bottomCardAdapter!!.setOnItemClickListener(object : BottomCardAdapter.ItemClick {
+                    override fun onItemClick(v: View?, position: Int) {
+                        val intent = Intent(this@MainActivity, InfoActivity::class.java)
+                        intent.putExtra("cafeData", locationData?.get(position))
+                        startActivity(intent)
+                    }
+                })
+                bottomCardAdapter!!.setOnFavoriteClickListener(object : BottomCardAdapter.ItemClick {
+                    override fun onItemClick(v: View?, position: Int) {
+                        //즐겨찾기 시 처리
+
+                    }
+                })
+
+            }
+        })
+    }
+
+    private fun getFavorites(){
+        vm.getAll().observe(this, androidx.lifecycle.Observer {
+            if(it != null){
+                favoriteData = it
+
+            }
+        })
+    }
+
+    private fun addFavorites(){
+
+    }
+
+    private fun removeFavorites(){
+        vm.getAll().observe(this, androidx.lifecycle.Observer {
+            if(it != null){
 
             }
         })

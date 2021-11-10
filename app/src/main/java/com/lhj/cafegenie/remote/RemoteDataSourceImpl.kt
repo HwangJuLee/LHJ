@@ -4,7 +4,7 @@ import com.lhj.cafegenie.retrofit.SearchServiceImpl
 
 class RemoteDataSourceImpl : RemoteDataSource {
 
-    val api = SearchServiceImpl.service
+    private val api = SearchServiceImpl.service
 
     override fun getLocationKakao(
         key: String,
